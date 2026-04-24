@@ -1,0 +1,24 @@
+services:
+  asl-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: asl-sign-web:latest
+    container_name: asl-sign-web
+    ports:
+      - "${HOST_PORT:-8000}:8000"
+    environment:
+      HOST: 0.0.0.0
+      PORT: "8000"
+      INPUT_TYPE: landmarks
+      CHECKPOINT_PATH: /app/runs/asl_landmarks_10cls_v2_light/best.pt
+      NOSIGN_LABEL: no_sign
+      NOSIGN_THRESHOLD: "0.50"
+      MIN_STABLE_SECONDS: "1.6"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 25s
+    restart: unless-stopped

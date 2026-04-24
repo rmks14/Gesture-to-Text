@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+*.log
+.venv/
+.git/
+.gitignore
+tmp_*/
+data/
+runs/*
+!runs/asl_landmarks_10cls_v2_light/
+!runs/asl_landmarks_10cls_v2_light/best.pt
+!runs/asl_landmarks_10cls_v2_light/latest.pt
+!runs/asl_landmarks_10cls_v2_light/history.json

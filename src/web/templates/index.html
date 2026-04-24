@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ASL Sign Studio</title>
+  <style>
+    :root {
+      --bg: #09111f;
+      --bg-soft: #0e1b32;
+      --panel: rgba(11, 19, 34, 0.76);
+      --panel-border: rgba(143, 168, 199, 0.28);
+      --text: #e8f1ff;
+      --muted: #9bb3d1;
+      --accent: #1fc4ff;
+      --accent-2: #70f0ba;
+      --danger: #ff5f6d;
+      --warn: #ffb256;
+      --good: #3ee08d;
+      --shadow: rgba(4, 8, 20, 0.58);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Space Grotesk", "Trebuchet MS", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at -15% -10%, #1d4ed8 0%, transparent 58%),
+        radial-gradient(1000px 540px at 115% 10%, #0ea5e9 0%, transparent 52%),
+        linear-gradient(140deg, var(--bg), #0b1730 48%, #0d1f39);
+      padding: 20px;
+    }
+
+    .app-shell {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1.7fr 1fr;
+      gap: 18px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      box-shadow: 0 18px 46px var(--shadow);
+      backdrop-filter: blur(8px);
+      padding: 18px;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 1.26rem;
+      letter-spacing: 0.02em;
+    }
+
+    .badge {
+      border: 1px solid rgba(148, 213, 255, 0.4);
+      border-radius: 999px;
+      padding: 4px 10px;
+      color: #cce9ff;
+      font-size: 0.78rem;
+      background: rgba(19, 57, 102, 0.5);
+    }
+
+    .camera-card {
+      position: relative;
+      margin-top: 10px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(143, 168, 199, 0.25);
+      background: #030712;
+      aspect-ratio: 16/9;
+    }
+
+    video, .overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    video {
+      transform: scaleX(-1);
+    }
+
+    .overlay {
+      transform: scaleX(-1);
+      pointer-events: none;
+    }
+
+    .actions {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    button {
+      border: none;
+      border-radius: 11px;
+      padding: 11px 10px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: white;
+      cursor: pointer;
+      transition: transform 120ms ease, opacity 120ms ease, filter 120ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+      transform: none;
+      filter: none;
+    }
+
+    .btn-start {
+      background: linear-gradient(135deg, #0ea5e9, #1d4ed8);
+    }
+
+    .btn-stop {
+      background: linear-gradient(135deg, #f43f5e, #e11d48);
+    }
+
+    .btn-clear {
+      background: linear-gradient(135deg, #475569, #334155);
+    }
+
+    .btn-generate {
+      background: linear-gradient(135deg, #16a34a, #0f766e);
+      width: 100%;
+      margin-top: 12px;
+    }
+
+    .stats {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .stat {
+      border-radius: 12px;
+      border: 1px solid rgba(143, 168, 199, 0.24);
+      background: rgba(3, 8, 21, 0.44);
+      padding: 10px;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 0.73rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 5px;
+    }
+
+    .stat-value {
+      font-size: 1rem;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
+    .hint {
+      margin-top: 10px;
+      color: #b4ceea;
+      font-size: 0.86rem;
+    }
+
+    .section-title {
+      margin: 10px 0 8px;
+      color: #d7e8ff;
+      font-size: 1rem;
+    }
+
+    .stack {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border-radius: 12px;
+      border: 1px solid rgba(143, 168, 199, 0.24);
+      overflow: hidden;
+      background: rgba(3, 8, 21, 0.43);
+      max-height: 218px;
+      overflow-y: auto;
+    }
+
+    .stack li {
+      border-bottom: 1px solid rgba(143, 168, 199, 0.17);
+      padding: 9px 11px;
+      font-size: 0.92rem;
+    }
+
+    .stack li:last-child {
+      border-bottom: none;
+    }
+
+    .chip {
+      display: inline-block;
+      min-width: 58px;
+      text-align: center;
+      margin-right: 8px;
+      border-radius: 999px;
+      color: #02251c;
+      background: #6cefb5;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      font-weight: 700;
+    }
+
+    .prob-row {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .prob-label {
+      min-width: 84px;
+      font-weight: 600;
+    }
+
+    .prob-bar {
+      flex: 1;
+      height: 9px;
+      background: rgba(131, 150, 171, 0.32);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .prob-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    }
+
+    .prob-pct {
+      min-width: 46px;
+      text-align: right;
+      color: #d4e7ff;
+      font-size: 0.85rem;
+    }
+
+    .sentence-box {
+      margin-top: 10px;
+      min-height: 70px;
+      border-radius: 12px;
+      border: 1px solid rgba(143, 168, 199, 0.25);
+      background: rgba(3, 8, 21, 0.45);
+      padding: 12px;
+      line-height: 1.45;
+      font-size: 1.02rem;
+      color: #dcf6ea;
+    }
+
+    .labels {
+      margin-top: 12px;
+      color: #bdd9f9;
+      font-size: 0.83rem;
+      line-height: 1.45;
+    }
+
+    .status-uncertain { color: var(--warn); }
+    .status-stable { color: var(--good); }
+    .status-holding { color: #74d9ff; }
+    .status-nosign { color: #8cbaff; }
+    .status-nohands { color: #f3c97d; }
+
+    @media (max-width: 1040px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <section class="card">
+      <div class="title-row">
+        <h1 class="title">ASL Sign Studio</h1>
+        <span class="badge">Input: <strong id="inputMode">{{ input_type }}</strong></span>
+      </div>
+
+      <div class="camera-card">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="overlay" class="overlay"></canvas>
+      </div>
+      <canvas id="captureCanvas" width="640" height="360" hidden></canvas>
+
+      <div class="actions">
+        <button id="startBtn" class="btn-start">Start Camera</button>
+        <button id="stopBtn" class="btn-stop" disabled>Stop Camera</button>
+        <button id="clearBtn" class="btn-clear" disabled>Clear Guesses</button>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-label">Prediction</div>
+          <div class="stat-value" id="predictionText">...</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Confidence</div>
+          <div class="stat-value" id="confidenceText">0.00</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Status</div>
+          <div class="stat-value" id="statusText">idle</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Warmup</div>
+          <div class="stat-value" id="warmupText">0/0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Hands</div>
+          <div class="stat-value" id="handsText">0</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">Hold Timer</div>
+          <div class="stat-value" id="holdText">0.0 / 0.0s</div>
+        </div>
+        <div class="stat">
+          <div class="stat-label">No-Sign Prob</div>
+          <div class="stat-value" id="nosignText">0.00</div>
+        </div>
+      </div>
+
+      <p class="hint">
+        Landmark skeleton is rendered from MediaPipe two-hand landmarks. A label is accepted only after hold-time + stability votes.
+      </p>
+      <div class="labels">Loaded labels: {{ labels|join(", ") }}</div>
+    </section>
+
+    <aside class="card">
+      <h2 class="title">Guesses and NLP Sentence</h2>
+
+      <h3 class="section-title">Recent Stable Guesses</h3>
+      <ul id="guessList" class="stack"></ul>
+
+      <h3 class="section-title">Top Predictions</h3>
+      <ul id="topList" class="stack"></ul>
+
+      <button id="generateBtn" class="btn-generate">Generate Sentence</button>
+      <div id="sentenceText" class="sentence-box">(no sentence yet)</div>
+    </aside>
+  </main>
+
+  <script>
+    const video = document.getElementById("video");
+    const captureCanvas = document.getElementById("captureCanvas");
+    const captureCtx = captureCanvas.getContext("2d");
+
+    const overlayCanvas = document.getElementById("overlay");
+    const overlayCtx = overlayCanvas.getContext("2d");
+
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const clearBtn = document.getElementById("clearBtn");
+    const generateBtn = document.getElementById("generateBtn");
+
+    const predictionText = document.getElementById("predictionText");
+    const confidenceText = document.getElementById("confidenceText");
+    const statusText = document.getElementById("statusText");
+    const warmupText = document.getElementById("warmupText");
+    const handsText = document.getElementById("handsText");
+    const holdText = document.getElementById("holdText");
+    const nosignText = document.getElementById("nosignText");
+    const sentenceText = document.getElementById("sentenceText");
+    const guessList = document.getElementById("guessList");
+    const topList = document.getElementById("topList");
+
+    const HAND_CONNECTIONS = [
+      [0,1],[1,2],[2,3],[3,4],
+      [0,5],[5,6],[6,7],[7,8],
+      [5,9],[9,10],[10,11],[11,12],
+      [9,13],[13,14],[14,15],[15,16],
+      [13,17],[17,18],[18,19],[19,20],
+      [0,17]
+    ];
+
+    let stream = null;
+    let sendLoop = null;
+    let inFlight = false;
+
+    function setButtons(running) {
+      startBtn.disabled = running;
+      stopBtn.disabled = !running;
+      clearBtn.disabled = !running;
+      generateBtn.disabled = false;
+    }
+
+    function clearSkeleton() {
+      overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+    }
+
+    function resizeOverlayToVideo() {
+      if (video.videoWidth > 0 && video.videoHeight > 0) {
+        overlayCanvas.width = video.videoWidth;
+        overlayCanvas.height = video.videoHeight;
+      }
+    }
+
+    function drawSkeleton(landmarks) {
+      clearSkeleton();
+      if (!landmarks || landmarks.length === 0) {
+        return;
+      }
+
+      overlayCtx.lineWidth = 2;
+      landmarks.forEach((hand, idx) => {
+        const points = hand.points || [];
+        if (points.length !== 21) return;
+        const stroke = idx === 0 ? "#1fc4ff" : "#70f0ba";
+        const fill = idx === 0 ? "#9fe8ff" : "#bdf7dc";
+        overlayCtx.strokeStyle = stroke;
+        overlayCtx.fillStyle = fill;
+
+        HAND_CONNECTIONS.forEach(([a, b]) => {
+          const pa = points[a];
+          const pb = points[b];
+          const ax = pa[0] * overlayCanvas.width;
+          const ay = pa[1] * overlayCanvas.height;
+          const bx = pb[0] * overlayCanvas.width;
+          const by = pb[1] * overlayCanvas.height;
+          overlayCtx.beginPath();
+          overlayCtx.moveTo(ax, ay);
+          overlayCtx.lineTo(bx, by);
+          overlayCtx.stroke();
+        });
+
+        points.forEach((p, i) => {
+          const x = p[0] * overlayCanvas.width;
+          const y = p[1] * overlayCanvas.height;
+          const r = i === 0 ? 4 : 2.5;
+          overlayCtx.beginPath();
+          overlayCtx.arc(x, y, r, 0, Math.PI * 2);
+          overlayCtx.fill();
+        });
+      });
+    }
+
+    function renderList(listEl, rows, placeholder) {
+      listEl.innerHTML = "";
+      if (!rows || rows.length === 0) {
+        const li = document.createElement("li");
+        li.textContent = placeholder;
+        listEl.appendChild(li);
+        return;
+      }
+      rows.forEach((row) => {
+        const li = document.createElement("li");
+        li.innerHTML = row;
+        listEl.appendChild(li);
+      });
+    }
+
+    function styleStatus(status) {
+      statusText.classList.remove("status-uncertain", "status-stable", "status-holding", "status-nosign", "status-nohands");
+      if (status === "stable") statusText.classList.add("status-stable");
+      if (status === "uncertain") statusText.classList.add("status-uncertain");
+      if (status === "holding") statusText.classList.add("status-holding");
+      if (status === "no_sign") statusText.classList.add("status-nosign");
+      if (status === "no_hands") statusText.classList.add("status-nohands");
+    }
+
+    async function callJson(url, payload = {}) {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        throw new Error(data.error || `Request failed: ${url}`);
+      }
+      return data;
+    }
+
+    async function sendFrame() {
+      if (!stream || inFlight) return;
+      if (video.videoWidth === 0 || video.videoHeight === 0) return;
+      inFlight = true;
+      try {
+        resizeOverlayToVideo();
+        captureCanvas.width = video.videoWidth;
+        captureCanvas.height = video.videoHeight;
+        captureCtx.drawImage(video, 0, 0, captureCanvas.width, captureCanvas.height);
+        const image = captureCanvas.toDataURL("image/jpeg", 0.78);
+        const data = await callJson("/api/predict", { image });
+
+        predictionText.textContent = data.prediction || "...";
+        confidenceText.textContent = Number(data.confidence || 0).toFixed(2);
+        statusText.textContent = data.status || "idle";
+        styleStatus(data.status || "idle");
+        warmupText.textContent = `${data.sequence_length || 0}/${data.sequence_target || 0}`;
+        handsText.textContent = String(data.hands_detected || 0);
+        holdText.textContent = `${Number(data.hold_seconds || 0).toFixed(1)} / ${Number(data.hold_target_seconds || 0).toFixed(1)}s`;
+        nosignText.textContent = Number(data.nosign_prob || 0).toFixed(2);
+
+        drawSkeleton(data.landmarks || []);
+
+        const guesses = (data.guesses || []).slice().reverse();
+        renderList(
+          guessList,
+          guesses.map((label, idx) => `<span class="chip">#${idx + 1}</span>${label}`),
+          "(no stable guesses yet)"
+        );
+
+        renderList(
+          topList,
+          (data.top || []).map((item) => {
+            const pct = Math.max(0, Math.min(100, Number(item.prob || 0) * 100));
+            return `
+              <div class="prob-row">
+                <span class="prob-label">${item.label}</span>
+                <div class="prob-bar"><div class="prob-fill" style="width:${pct.toFixed(1)}%"></div></div>
+                <span class="prob-pct">${pct.toFixed(1)}%</span>
+              </div>
+            `;
+          }),
+          "(waiting for predictions)"
+        );
+      } catch (err) {
+        statusText.textContent = `error: ${err.message}`;
+        styleStatus("uncertain");
+      } finally {
+        inFlight = false;
+      }
+    }
+
+    async function startCamera() {
+      if (stream) return;
+      await callJson("/api/start");
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+        audio: false,
+      });
+      video.srcObject = stream;
+      await video.play();
+      resizeOverlayToVideo();
+      clearSkeleton();
+      setButtons(true);
+      sentenceText.textContent = "(collecting labels...)";
+      sendLoop = setInterval(sendFrame, 170);
+    }
+
+    async function stopCamera() {
+      if (sendLoop) {
+        clearInterval(sendLoop);
+        sendLoop = null;
+      }
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+        stream = null;
+      }
+      video.srcObject = null;
+      clearSkeleton();
+      await callJson("/api/stop");
+      setButtons(false);
+      predictionText.textContent = "...";
+      confidenceText.textContent = "0.00";
+      statusText.textContent = "stopped";
+      warmupText.textContent = "0/0";
+      handsText.textContent = "0";
+      holdText.textContent = "0.0 / 0.0s";
+      nosignText.textContent = "0.00";
+      styleStatus("uncertain");
+    }
+
+    async function clearGuesses() {
+      await callJson("/api/clear");
+      renderList(guessList, [], "(no stable guesses yet)");
+      sentenceText.textContent = "(cleared)";
+      predictionText.textContent = "...";
+      confidenceText.textContent = "0.00";
+      statusText.textContent = "cleared";
+      holdText.textContent = "0.0 / 0.0s";
+      nosignText.textContent = "0.00";
+      styleStatus("uncertain");
+    }
+
+    async function generateSentence() {
+      try {
+        const data = await callJson("/api/generate_sentence");
+        sentenceText.textContent = data.sentence || "(no sentence yet)";
+      } catch (err) {
+        sentenceText.textContent = `error: ${err.message}`;
+      }
+    }
+
+    startBtn.addEventListener("click", () => {
+      startCamera().catch((err) => {
+        statusText.textContent = `camera error: ${err.message}`;
+      });
+    });
+
+    stopBtn.addEventListener("click", () => {
+      stopCamera().catch((err) => {
+        statusText.textContent = `stop error: ${err.message}`;
+      });
+    });
+
+    clearBtn.addEventListener("click", () => {
+      clearGuesses().catch((err) => {
+        statusText.textContent = `clear error: ${err.message}`;
+      });
+    });
+
+    generateBtn.addEventListener("click", generateSentence);
+
+    window.addEventListener("resize", resizeOverlayToVideo);
+
+    renderList(guessList, [], "(no stable guesses yet)");
+    renderList(topList, [], "(waiting for predictions)");
+  </script>
+</body>
+</html>

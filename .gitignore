@@ -1,8 +1,22 @@
 __pycache__/
 *.py[cod]
 .venv/
-data/processed/
-data/processed_*/
+
+# Local datasets, generated landmarks, downloaded videos, and archives.
+data/
+
+# Training outputs and model checkpoints.
 runs/
 snapshots/
-data/msasl/msasl.tar
+*.pt
+*.pth
+*.ckpt
+
+# Large media/archive artifacts should live outside Git.
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.tar
+*.zip
+*.npz
